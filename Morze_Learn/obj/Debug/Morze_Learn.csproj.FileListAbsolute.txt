@@ -1,0 +1,10 @@
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\bin\Debug\Morze_Learn.exe.config
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\bin\Debug\Morze_Learn.exe
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\bin\Debug\Morze_Learn.pdb
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\obj\Debug\Morze_Learn.csproj.AssemblyReference.cache
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\obj\Debug\Morze_Learn.Form1.resources
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\obj\Debug\Morze_Learn.Properties.Resources.resources
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\obj\Debug\Morze_Learn.csproj.GenerateResource.cache
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\obj\Debug\Morze_Learn.csproj.CoreCompileInputs.cache
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\obj\Debug\Morze_Learn.exe
+E:\УП у Александра Михайловича Бойкова\Приложение\Morze_Learn\Morze_Learn\obj\Debug\Morze_Learn.pdb
