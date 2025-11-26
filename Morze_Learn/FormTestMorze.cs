@@ -1,211 +1,399 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.Drawing;
+using System.Linq;
 
 namespace YourNamespace
 {
     public partial class FormTestMorze : Form
     {
-        // список вопросов
-        private List<Question> вопросы;
-        // индекс текущего вопроса
-        private int индексТекущегоВопроса = 0;
-        // количество правильных ответов
-        private int результат = 0;
-        // счетчик заданных вопросов
-        private int количествоЗаданныхВопросов = 0;
-        // лимит вопросов
-        private const int МаксимальноеКоличествоВопросов = 10;
+        private List<Question> _questions;
+        private List<Question> _allQuestions;
+        private int _currentQuestionIndex = 0;
+        private int _score = 0;
+        private int _questionsAsked = 0;
+        private const int MaxQuestions = 10;
+        private bool _isPaused = false;
+        private string _currentUserName;
 
-        public FormTestMorze()
+        // Группы символов
+        private Dictionary<string, bool> _selectedGroups = new Dictionary<string, bool>
         {
+            { "latin", true },
+            { "russian", true },
+            { "numbers", true },
+            { "symbols", true }
+        };
+
+        public FormTestMorze(string userName = "Аноним")
+        {
+            _currentUserName = userName;
             InitializeComponent();
-
-            // инициализация вопросов
-            ИнициализироватьВопросы();
-
-            // перемешивание вопросов
-            ПеремешатьВопросы();
-
-            // загрузка первого вопроса
-            ЗагрузитьВопрос();
-
-            // добавляем обработчик нажатия клавиши Enter в поле ответа
-            txtAnswer.KeyDown += TxtAnswer_KeyDown;
+            InitializeAllQuestions();
+            InitializeQuestions();
+            ShuffleQuestions();
+            LoadQuestion();
+            UpdateProgressBar();
+            UpdateStatus();
         }
 
-        // Метод для инициализации списка вопросов
-        private void ИнициализироватьВопросы()
+        private void InitializeAllQuestions()
         {
-            вопросы = new List<Question>
+            _allQuestions = new List<Question>
             {
-                // все ваши вопросы
-                new Question("Что означает код .- ?", "A"),
-                new Question("Что означает код -...", "B"),
-                new Question("Что означает код -.-.", "C"),
-                new Question("Что означает код -..", "D"),
-                new Question("Что означает код .", "E"),
-                new Question("Что означает код ..-.", "F"),
-                new Question("Что означает код --.", "G"),
-                new Question("Что означает код ....", "H"),
-                new Question("Что означает код ..", "I"),
-                new Question("Что означает код .---", "J"),
-                new Question("Что означает код -.-", "K"),
-                new Question("Что означает код .-..", "L"),
-                new Question("Что означает код --", "M"),
-                new Question("Что означает код -.", "N"),
-                new Question("Что означает код ---", "O"),
-                new Question("Что означает код .--.", "P"),
-                new Question("Что означает код --.-", "Q"),
-                new Question("Что означает код .-.", "R"),
-                new Question("Что означает код ...", "S"),
-                new Question("Что означает код -", "T"),
-                new Question("Что означает код ..-", "U"),
-                new Question("Что означает код ...-", "V"),
-                new Question("Что означает код .--", "W"),
-                new Question("Что означает код -..-", "X"),
-                new Question("Что означает код -.--", "Y"),
-                new Question("Что означает код --..", "Z"),
-                // цифры
-                new Question("Что означает код .---- ?", "1"),
-                new Question("Что означает код ..--- ?", "2"),
-                new Question("Что означает код ...-- ?", "3"),
-                new Question("Что означает код ....- ?", "4"),
-                new Question("Что означает код ..... ?", "5"),
-                new Question("Что означает код -.... ?", "6"),
-                new Question("Что означает код --... ?", "7"),
-                new Question("Что означает код ---.. ?", "8"),
-                new Question("Что означает код ----. ?", "9"),
-                new Question("Что означает код ----- ?", "0"),
-                // знаки препинания и спец.символы
-                new Question("Что означает код .-.-.- ?", "."),
-                new Question("Что означает код --..-- ?", ","),
-                new Question("Что означает код ..--.. ?", "?"),
-                new Question("Что означает код -.-.-- ?", "!"),
-                new Question("Что означает код .-...", ":"),
-                new Question("Что означает код -.-.-.", ";"),
-                new Question("Что означает код -..-.", "/"),
-                new Question("Что означает код -.--.", "'"),
-                new Question("Что означает код -.--.", "\""),
-                new Question("Что означает код .-...", "="),
-                new Question("Что означает код ...-..- ?", "$"),
-                new Question("Что означает код .--.-. ?", "@"),
-                new Question("Что означает код ...---...", "SOS"),
-                new Question("Код для паузы или разделения слов — /", "/")
+                // Латинские буквы
+                new Question("Что означает код .- ?", "A", "latin"),
+                new Question("Что означает код -...", "B", "latin"),
+                new Question("Что означает код -.-.", "C", "latin"),
+                new Question("Что означает код -..", "D", "latin"),
+                new Question("Что означает код .", "E", "latin"),
+                new Question("Что означает код ..-.", "F", "latin"),
+                new Question("Что означает код --.", "G", "latin"),
+                new Question("Что означает код ....", "H", "latin"),
+                new Question("Что означает код ..", "I", "latin"),
+                new Question("Что означает код .---", "J", "latin"),
+                new Question("Что означает код -.-", "K", "latin"),
+                new Question("Что означает код .-..", "L", "latin"),
+                new Question("Что означает код --", "M", "latin"),
+                new Question("Что означает код -.", "N", "latin"),
+                new Question("Что означает код ---", "O", "latin"),
+                new Question("Что означает код .--.", "P", "latin"),
+                new Question("Что означает код --.-", "Q", "latin"),
+                new Question("Что означает код .-.", "R", "latin"),
+                new Question("Что означает код ...", "S", "latin"),
+                new Question("Что означает код -", "T", "latin"),
+                new Question("Что означает код ..-", "U", "latin"),
+                new Question("Что означает код ...-", "V", "latin"),
+                new Question("Что означает код .--", "W", "latin"),
+                new Question("Что означает код -..-", "X", "latin"),
+                new Question("Что означает код -.--", "Y", "latin"),
+                new Question("Что означает код --..", "Z", "latin"),
+                
+                // Цифры
+                new Question("Что означает код .---- ?", "1", "numbers"),
+                new Question("Что означает код ..--- ?", "2", "numbers"),
+                new Question("Что означает код ...-- ?", "3", "numbers"),
+                new Question("Что означает код ....- ?", "4", "numbers"),
+                new Question("Что означает код ..... ?", "5", "numbers"),
+                new Question("Что означает код -.... ?", "6", "numbers"),
+                new Question("Что означает код --... ?", "7", "numbers"),
+                new Question("Что означает код ---.. ?", "8", "numbers"),
+                new Question("Что означает код ----. ?", "9", "numbers"),
+                new Question("Что означает код ----- ?", "0", "numbers"),
+                
+                // Русские буквы
+                new Question("Что означает код .- ?", "А", "russian"),
+                new Question("Что означает код -...", "Б", "russian"),
+                new Question("Что означает код .--", "В", "russian"),
+                new Question("Что означает код --.", "Г", "russian"),
+                new Question("Что означает код -..", "Д", "russian"),
+                new Question("Что означает код .", "Е", "russian"),
+                new Question("Что означает код ...-", "Ж", "russian"),
+                new Question("Что означает код --..", "З", "russian"),
+                new Question("Что означает код ..", "И", "russian"),
+                new Question("Что означает код .---", "Й", "russian"),
+                new Question("Что означает код -.-", "К", "russian"),
+                new Question("Что означает код .-..", "Л", "russian"),
+                new Question("Что означает код --", "М", "russian"),
+                new Question("Что означает код -.", "Н", "russian"),
+                new Question("Что означает код ---", "О", "russian"),
+                new Question("Что означает код .--.", "П", "russian"),
+                new Question("Что означает код .-.", "Р", "russian"),
+                new Question("Что означает код ...", "С", "russian"),
+                new Question("Что означает код -", "Т", "russian"),
+                new Question("Что означает код ..-", "У", "russian"),
+                new Question("Что означает код ..-.", "Ф", "russian"),
+                new Question("Что означает код ....", "Х", "russian"),
+                new Question("Что означает код -.-.", "Ц", "russian"),
+                new Question("Что означает код ---.", "Ч", "russian"),
+                new Question("Что означает код ----", "Ш", "russian"),
+                new Question("Что означает код --.-", "Щ", "russian"),
+                new Question("Что означает код --.--", "Ъ", "russian"),
+                new Question("Что означает код -.--", "Ы", "russian"),
+                new Question("Что означает код -..-", "Ь", "russian"),
+                new Question("Что означает код ..-..", "Э", "russian"),
+                new Question("Что означает код ..--", "Ю", "russian"),
+                new Question("Что означает код .-.-", "Я", "russian"),
+                
+                // Знаки препинания и специальные сигналы
+                new Question("Что означает код .-.-.- ?", ".", "symbols"),
+                new Question("Что означает код --..-- ?", ",", "symbols"),
+                new Question("Что означает код ..--.. ?", "?", "symbols"),
+                new Question("Что означает код -.-.-- ?", "!", "symbols"),
+                new Question("Что означает код ---...", ":", "symbols"),
+                new Question("Что означает код -.-.-.", ";", "symbols"),
+                new Question("Что означает код -..-.", "/", "symbols"),
+                new Question("Что означает код .----.", "'", "symbols"),
+                new Question("Что означает код .-..-.", "\"", "symbols"),
+                new Question("Что означает код -...-", "=", "symbols"),
+                new Question("Что означает код ...-..- ?", "$", "symbols"),
+                new Question("Что означает код .--.-. ?", "@", "symbols"),
+                new Question("Что означает код ...---...", "SOS", "symbols"),
+                new Question("Код для паузы или разделения слов", "/", "symbols")
             };
         }
 
-        // Метод для перемешивания вопросов
-        private void ПеремешатьВопросы()
+        private void InitializeQuestions()
         {
-            Random случайный = new Random();
-            int длина = вопросы.Count;
-            for (int i = 0; i < длина - 1; i++)
+            _questions = new List<Question>();
+
+            // Фильтруем вопросы по выбранным группам
+            foreach (var question in _allQuestions)
             {
-                int j = случайный.Next(i, длина);
-                var временнаяПеременная = вопросы[i];
-                вопросы[i] = вопросы[j];
-                вопросы[j] = временнаяПеременная;
+                if (_selectedGroups.ContainsKey(question.Category) && _selectedGroups[question.Category])
+                {
+                    _questions.Add(question);
+                }
+            }
+
+            // Если ничего не выбрано, используем все вопросы
+            if (_questions.Count == 0)
+            {
+                _questions = new List<Question>(_allQuestions);
+                // Сбрасываем выбор на все группы
+                foreach (var key in _selectedGroups.Keys.ToList())
+                {
+                    _selectedGroups[key] = true;
+                }
+                UpdateCheckboxes();
             }
         }
 
-        // Метод для загрузки вопроса
-        private void ЗагрузитьВопрос()
+        private void UpdateCheckboxes()
         {
-            if (количествоЗаданныхВопросов >= МаксимальноеКоличествоВопросов || индексТекущегоВопроса >= вопросы.Count)
+            checkBoxLatin.Checked = _selectedGroups["latin"];
+            checkBoxRussian.Checked = _selectedGroups["russian"];
+            checkBoxNumbers.Checked = _selectedGroups["numbers"];
+            checkBoxSymbols.Checked = _selectedGroups["symbols"];
+        }
+
+        private void CheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            CheckBox checkBox = sender as CheckBox;
+            if (checkBox != null)
             {
-                ПоказатьРезультаты();
+                string group = checkBox.Tag.ToString();
+                _selectedGroups[group] = checkBox.Checked;
+            }
+        }
+
+        private void BtnSelectAll_Click(object sender, EventArgs e)
+        {
+            foreach (var key in _selectedGroups.Keys.ToList())
+            {
+                _selectedGroups[key] = true;
+            }
+            UpdateCheckboxes();
+        }
+
+        private void BtnDeselectAll_Click(object sender, EventArgs e)
+        {
+            foreach (var key in _selectedGroups.Keys.ToList())
+            {
+                _selectedGroups[key] = false;
+            }
+            UpdateCheckboxes();
+        }
+
+        private void TextBoxAnswer_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                BtnNext_Click(sender, e);
+                e.Handled = true;
+            }
+        }
+
+        private void ShuffleQuestions()
+        {
+            Random rnd = new Random();
+            int n = _questions.Count;
+            for (int i = 0; i < n - 1; i++)
+            {
+                int j = rnd.Next(i, n);
+                var temp = _questions[i];
+                _questions[i] = _questions[j];
+                _questions[j] = temp;
+            }
+        }
+
+        private void LoadQuestion()
+        {
+            if (_questionsAsked >= MaxQuestions || _currentQuestionIndex >= _questions.Count)
+            {
+                ShowResults();
                 return;
             }
 
-            if (индексТекущегоВопроса < вопросы.Count)
+            if (_currentQuestionIndex < _questions.Count)
             {
-                lblQuestion.Text = вопросы[индексТекущегоВопроса].Text;
-                txtAnswer.Text = "";
-                txtAnswer.Focus();
-                индексТекущегоВопроса++;
-                количествоЗаданныхВопросов++;
+                labelQuestion.Text = _questions[_currentQuestionIndex].Text;
+                textBoxAnswer.Text = "";
+                textBoxAnswer.Focus();
+                _currentQuestionIndex++;
+                _questionsAsked++;
+                UpdateProgressBar();
+                UpdateStatus();
             }
         }
 
-        // Обработчик нажатия кнопки "Далее"
+        private void UpdateProgressBar()
+        {
+            progressBar.Value = _questionsAsked;
+        }
+
+        private void UpdateStatus()
+        {
+            int selectedGroupsCount = _selectedGroups.Count(kv => kv.Value);
+            string groupsText = selectedGroupsCount == 4 ? "Все группы" : $"{selectedGroupsCount} групп";
+            labelStatus.Text = $"Пользователь: {_currentUserName} | {groupsText} | Вопрос {_questionsAsked} из {MaxQuestions} | Правильных ответов: {_score}";
+        }
+
         private void BtnNext_Click(object sender, EventArgs e)
         {
-            ПроверитьОтветИЗагрузитьСледующий();
-        }
+            if (_isPaused) return;
 
-        // Метод для проверки ответа и перехода к следующему вопросу
-        private void ПроверитьОтветИЗагрузитьСледующий()
-        {
-            string ответПользователя = txtAnswer.Text.Trim().ToUpper();
-            string правильныйОтвет = вопросы[индексТекущегоВопроса - 1].Answer.ToUpper();
-
-            if (ответПользователя == правильныйОтвет)
+            if (_currentQuestionIndex > 0 && _currentQuestionIndex - 1 < _questions.Count)
             {
-                результат++;
+                string userAnswer = textBoxAnswer.Text.Trim().ToUpper();
+                string correctAnswer = _questions[_currentQuestionIndex - 1].Answer.ToUpper();
+
+                if (userAnswer == correctAnswer)
+                {
+                    _score++;
+                }
             }
 
-            ЗагрузитьВопрос();
+            LoadQuestion();
         }
 
-        // Метод для отображения итогов
-        private void ПоказатьРезультаты()
+        private void ShowResults()
         {
-            lblQuestion.Visible = false;
-            txtAnswer.Visible = false;
-            btnNext.Visible = false;
+            labelQuestion.Visible = false;
+            textBoxAnswer.Visible = false;
+            buttonNext.Visible = false;
+            buttonPause.Visible = false;
             progressBar.Visible = false;
+            groupBoxSelection.Enabled = true;
 
-            lblResult.Text = $"Тест завершен!\nВаш результат: {результат} из {МаксимальноеКоличествоВопросов}";
-            lblResult.Visible = true;
+            labelResult.Text = $"ТЕСТ ЗАВЕРШЕН!\n\nПользователь: {_currentUserName}\nВаш результат: {_score} из {MaxQuestions}\n\n";
+
+            double percentage = (_score * 100.0) / MaxQuestions;
+            if (percentage >= 90)
+                labelResult.Text += "Отлично! Вы прекрасно знаете азбуку Морзе! 🎉";
+            else if (percentage >= 70)
+                labelResult.Text += "Хорошо! Продолжайте практиковаться! 👍";
+            else if (percentage >= 50)
+                labelResult.Text += "Удовлетворительно. Рекомендуется повторить материал. 📚";
+            else
+                labelResult.Text += "Нужно больше практики. Не сдавайтесь! 💪";
+
+            labelResult.Visible = true;
+
+            int selectedGroupsCount = _selectedGroups.Count(kv => kv.Value);
+            string groupsText = selectedGroupsCount == 4 ? "Все группы" : $"{selectedGroupsCount} групп";
+            labelStatus.Text = $"Тест завершен. Пользователь: {_currentUserName} | {groupsText} | Результат: {_score}/{MaxQuestions} ({percentage:0}%)";
+
         }
 
-        // Класс вопроса
+
+
+        private void BtnPause_Click(object sender, EventArgs e)
+        {
+            _isPaused = !_isPaused;
+
+            if (_isPaused)
+            {
+                buttonPause.BackColor = Color.ForestGreen;
+                buttonPause.Text = "▶ Продолжить";
+                textBoxAnswer.Enabled = false;
+                buttonNext.Enabled = false;
+                buttonRestart.Enabled = false;
+                buttonLeaderboard.Enabled = false;
+                groupBoxSelection.Enabled = false;
+                labelStatus.Text = "Тест приостановлен...";
+            }
+            else
+            {
+                buttonPause.BackColor = Color.Orange;
+                buttonPause.Text = "⏸ Пауза";
+                textBoxAnswer.Enabled = true;
+                buttonNext.Enabled = true;
+                buttonRestart.Enabled = true;
+                buttonLeaderboard.Enabled = true;
+                groupBoxSelection.Enabled = true;
+                UpdateStatus();
+                textBoxAnswer.Focus();
+            }
+        }
+
+        private void BtnRestart_Click(object sender, EventArgs e)
+        {
+            // Проверяем, что выбрана хотя бы одна группа
+            if (!_selectedGroups.Any(kv => kv.Value))
+            {
+                MessageBox.Show("Пожалуйста, выберите хотя бы одну группу символов для тестирования.", "Выбор групп",
+                              MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            _currentQuestionIndex = 0;
+            _score = 0;
+            _questionsAsked = 0;
+            _isPaused = false;
+
+            InitializeQuestions();
+            ShuffleQuestions();
+
+            labelQuestion.Visible = true;
+            textBoxAnswer.Visible = true;
+            buttonNext.Visible = true;
+            buttonPause.Visible = true;
+            progressBar.Visible = true;
+            labelResult.Visible = false;
+
+            buttonPause.BackColor = Color.Orange;
+            buttonPause.Text = "⏸ Пауза";
+            textBoxAnswer.Enabled = true;
+            buttonNext.Enabled = true;
+            buttonRestart.Enabled = true;
+            buttonLeaderboard.Enabled = true;
+            groupBoxSelection.Enabled = true;
+
+            LoadQuestion();
+            UpdateProgressBar();
+            UpdateStatus();
+            textBoxAnswer.Focus();
+        }
+
+         private void FormTestMorze_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (_questionsAsked < MaxQuestions && _questionsAsked > 0)
+            {
+                var result = MessageBox.Show("Тест еще не завершен. Вы действительно хотите выйти?",
+                                           "Подтверждение выхода",
+                                           MessageBoxButtons.YesNo,
+                                           MessageBoxIcon.Question);
+                if (result == DialogResult.No)
+                {
+                    e.Cancel = true;
+                }
+            }
+        }
+
         private class Question
         {
             public string Text { get; }
             public string Answer { get; }
+            public string Category { get; }
 
-            public Question(string text, string answer)
+            public Question(string text, string answer, string category)
             {
                 Text = text;
                 Answer = answer;
+                Category = category;
             }
-        }
-
-        // Обработчик нажатия клавиши Enter в поле ответа
-        private void TxtAnswer_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.Handled = true; // отключить системное действие Enter
-                e.SuppressKeyPress = true; // отключить звуковой сигнал
-                ПроверитьОтветИЗагрузитьСледующий(); // проверить ответ и перейти дальше
-            }
-        }
-
-        // Обработчик для кнопки "Начать заново" (если есть)
-        private void buttonRestart_Click(object sender, EventArgs e)
-        {
-            // сбросить параметры
-            индексТекущегоВопроса = 0;
-            результат = 0;
-            количествоЗаданныхВопросов = 0;
-
-            // восстановить видимость элементов
-            lblQuestion.Visible = true;
-            txtAnswer.Visible = true;
-            btnNext.Visible = true;
-            progressBar.Visible = true;
-            lblResult.Text = "";
-            lblResult.Visible = false;
-            progressBar.Value = 0;
-
-            // перемешать вопросы заново
-            ПеремешатьВопросы();
-
-            // загрузить первый вопрос
-            ЗагрузитьВопрос();
         }
     }
 }
